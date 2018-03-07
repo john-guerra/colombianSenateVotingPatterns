@@ -60,11 +60,14 @@ input#search, label {
 <input type="text" id="search" placeholder="Buscar senador@">
 <input type="checkbox" id="useForceInABox"><label for="useForceInABox">Agrupar por partido</label>
 
+<div id="messages"></div>
 <div id="network" height="900"></div>
 
 <script src="networkCanvasChart.js"></script>
 <script src="forceInABoxv4.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="./countVotes.js"></script>
+<script type="text/javascript" src="https://john-guerra.github.io/NodeNavigator/NodeNavigator.js"></script>
 <script>
 /* global d3, networkCanvasChart */
 
@@ -87,7 +90,7 @@ plot.xAttr = "party";
 plot.xTitle = "Partido";
 plot.yTitle = false;
 plot.boundaries = true;
-plot.linkStrokeStyle = "rgba(20,20,100,0.05)";
+plot.linkStrokeStyle = "rgba(80,80,100,0.05)";
 
 // var svg = d3.select("svg"),
 //     width = +svg.attr("width"),
@@ -104,11 +107,55 @@ var minLink = 2;
 //     .force("x", d3.forceX(width / 2))
 //     .force("y", d3.forceY(height / 2));
 
-d3.json("VotacionesSenado2017_de_CongresoVisible.json", function(error, graph) {
+// d3.json("VotacionesSenado2017_de_CongresoVisible.json", function(error, graph) {
+d3.csv("VotacionesSenado2017_de_CongresoVisible.csv", function (error, data) {
+
   if (error) throw error;
-  var filteredLinks = graph.links;
-  plot.width = d3.select("#network").node().offsetWidth;
-  function update() {
+
+  
+
+  var nn = new NodeNavigator("#nodeNavigator", 600);
+  var catColumns = [
+    "car-type",
+    "gate-name"
+  ];
+  var seqColumns = [
+    "Timestamp"
+  ];
+  catColumns.forEach((c) => nn.addCategoricalAttrib(c));
+  seqColumns.forEach((c) => nn.addSequentialAttrib(c));
+    d3.csv("./export_data.csv", function (err, data) {
+      if (err) throw err;
+    data.forEach((d,i) => d.i = i);
+    nn.data(data);
+  });
+
+  
+  var graph;
+
+  function update(mData) {
+
+    mData = mData || data;
+    
+    console.log("Counting votes");
+    graph = countVotes(data);
+    console.log("Done");
+
+
+    var dNodes = d3.map();
+    graph.nodes.forEach(function (d) {
+      d.id = d.name;
+      d.cluster= d.party;
+      dNodes.set(d.name, d);
+    });
+    graph.links.forEach(function (d) {
+      d.source = dNodes.get(d.source);
+      d.target = dNodes.get(d.target);
+    });
+
+    var filteredLinks = graph.links;
+    plot.width = d3.select("#network").node().offsetWidth;
+
     filteredLinks = graph.links.filter(function (d) {
       return d.count >= minLink;
         // && d.source.party === d.target.party;
@@ -121,46 +168,38 @@ d3.json("VotacionesSenado2017_de_CongresoVisible.json", function(error, graph) {
         links:filteredLinks
       })
       .call(plot.update);
+
+    d3.select("#link")
+      .property("max", d3.max(graph.links, function (d) { return d.count; }))
+      .on("input", function () {
+        minLink = +d3.select("#link").property("value");
+        d3.select("#valLink").text(minLink);
+        update();
+      });
+
+
+    d3.select("#search")
+      .on("keypress", function () {          
+        console.log(d3.select("#search").property("value"));
+        var search = d3.select("#search").property("value").toUpperCase();
+        var filteredNodes = graph.nodes.filter(
+          function (s) { 
+            return s.name.toUpperCase().indexOf( search)!==-1; 
+          }
+        );
+        console.log(filteredNodes);
+        if (filteredNodes)
+          plot.highlightNode(filteredNodes[0]);
+      });
+    d3.select("#useForceInABox")
+      .on("change", function () {          
+        plot.useForceInABox=d3.select("#useForceInABox").property("checked");
+        update();
+      });          
   }
-  var dNodes = d3.map();
-  graph.nodes.forEach(function (d) {
-    d.id = d.name;
-    d.cluster= d.party;
-    dNodes.set(d.name, d);
-  });
-  graph.links.forEach(function (d) {
-    d.source = dNodes.get(d.source);
-    d.target = dNodes.get(d.target);
-  });
 
 
-  d3.select("#link")
-    .property("max", d3.max(graph.links, function (d) { return d.count; }))
-    .on("input", function () {
-      minLink = +d3.select("#link").property("value");
-      d3.select("#valLink").text(minLink);
-      update();
-    });
 
-
-  d3.select("#search")
-    .on("keypress", function () {          
-      console.log(d3.select("#search").property("value"));
-      var search = d3.select("#search").property("value").toUpperCase();
-      var filteredNodes = graph.nodes.filter(
-        function (s) { 
-          return s.name.toUpperCase().indexOf( search)!==-1; 
-        }
-      );
-      console.log(filteredNodes);
-      if (filteredNodes)
-        plot.highlightNode(filteredNodes[0]);
-    });
-  d3.select("#useForceInABox")
-    .on("change", function () {          
-      plot.useForceInABox=d3.select("#useForceInABox").property("checked");
-      update();
-    });    
   update();
 
     // // Remove duplicates and create a dumb object for the nodes
