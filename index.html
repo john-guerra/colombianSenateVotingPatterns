@@ -15,7 +15,8 @@ body {
 }
 #network {
   position:relative;
-  width: 100%;
+  width: 60%;
+  float:left;
   /*display: none;*/
 }
 .desc {
@@ -46,6 +47,22 @@ input#search, label {
   text-anchor: middle;
   pointer-events: none;
   text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+
+}
+#nn {
+  float: left;  
+  width: 40%;
+  overflow-x: scroll;
+}
+#chartingArea {
+  width: 100%;
+}
+#Loading {
+
+  position:absolute;
+  top:50%;
+  left:40%;
+  font-size: 150%;
 }
 
   </style>
@@ -60,16 +77,17 @@ input#search, label {
 <input type="text" id="search" placeholder="Buscar senador@">
 <input type="checkbox" id="useForceInABox"><label for="useForceInABox">Agrupar por partido</label>
 
-<div id="messages"></div>
-<div id="nodeNavigator"></div>
-<div id="network" height="900"></div>
+<div id="Loading"> Cargando 130k registros, por favor espere </div>
+<div id="chartingArea">  
+  <div id="nn"></div>
+  <div id="network" height="900"></div>
+</div>
 
 <script src="networkCanvasChart.js"></script>
 <script src="forceInABoxv4.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="./countVotes.js"></script>
-<!-- <script type="text/javascript" src="https://john-guerra.github.io/NodeNavigator/NodeNavigator.js"></script> -->
-<script type="text/javascript" src="NodeNavigator.js"></script>
+<script type="text/javascript" src="https://john-guerra.github.io/NodeNavigator/NodeNavigator.js"></script>
 <script>
 /* global d3, networkCanvasChart */
 
@@ -110,13 +128,13 @@ var minLink = 2;
 //     .force("y", d3.forceY(height / 2));
 
 // d3.json("VotacionesSenado2017_de_CongresoVisible.json", function(error, graph) {
-d3.csv("VotacionesSenado2017_de_CongresoVisible.csv", function (error, data) {
+d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, data) {
 
   if (error) throw error;
-
+  d3.select("#Loading").text("");
   
 
-  var nn = new NodeNavigator("#nodeNavigator", 600);
+  var nn = new NodeNavigator("#nn", 600);
   var catColumns = [
     // "titulo",
 
@@ -144,7 +162,7 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible.csv", function (error, data) {
   var seqColumns = [
     "fecha",
     "fecha_radicacion",
-    "numero_ley",
+    // "numero_ley",
     "id_votacion",
     "año"
 
