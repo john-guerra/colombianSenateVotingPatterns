@@ -139,7 +139,6 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
     // "titulo",
 
     "aprobada",
-    "partido",
     "corporacion",
     "congresista",
     "numero_camara",
@@ -180,6 +179,8 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
   catColumns.forEach((c) => nn.addCategoricalAttrib(c));
   seqColumns.forEach((c) => nn.addSequentialAttrib(c));
 
+  nn.addCategoricalAttrib("partido", color);
+
   nn.updateCallback(function (newData) { 
     console.log("update", newData.length);
     update(newData); 
@@ -201,13 +202,14 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
     var dNodes = d3.map();
     graph.nodes.forEach(function (d) {
       d.id = d.name;
-      d.cluster= d.party;
+      d.cluster = d.party;
       dNodes.set(d.name, d);
     });
     graph.links.forEach(function (d) {
       d.source = dNodes.get(d.source);
       d.target = dNodes.get(d.target);
     });
+    plot.color(color);
 
     var filteredLinks = graph.links;
     plot.width = d3.select("#network").node().offsetWidth;
