@@ -61,17 +61,19 @@ input#search, label {
 <input type="checkbox" id="useForceInABox"><label for="useForceInABox">Agrupar por partido</label>
 
 <div id="messages"></div>
+<div id="nodeNavigator"></div>
 <div id="network" height="900"></div>
 
 <script src="networkCanvasChart.js"></script>
 <script src="forceInABoxv4.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="./countVotes.js"></script>
-<script type="text/javascript" src="https://john-guerra.github.io/NodeNavigator/NodeNavigator.js"></script>
+<!-- <script type="text/javascript" src="https://john-guerra.github.io/NodeNavigator/NodeNavigator.js"></script> -->
+<script type="text/javascript" src="NodeNavigator.js"></script>
 <script>
 /* global d3, networkCanvasChart */
 
-var plot = new networkCanvasChart();
+var plot = new networkCanvasChart()
 plot.collide = false;
 plot.showImages = false;
 plot.showLinks = false;
@@ -116,29 +118,65 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible.csv", function (error, data) {
 
   var nn = new NodeNavigator("#nodeNavigator", 600);
   var catColumns = [
-    "car-type",
-    "gate-name"
+    // "titulo",
+
+    "aprobada",
+    "partido",
+    "corporacion",
+    "congresista",
+    "numero_camara",
+    "numero_senado",
+    "tema_principal",
+    "tema_secundario",
+    // "alias",
+    "iniciativa",    
+    // "autores",    
+    "tipo_votacion",
+    // "motivo",
+    
+    "estado_actual",    
+    // "tags"
+    "voto",
+    "periodo"
+
+
   ];
   var seqColumns = [
-    "Timestamp"
+    "fecha",
+    "fecha_radicacion",
+    "numero_ley",
+    "id_votacion",
+    "año"
+
   ];
+
+  data.forEach(function(d) {
+    d.fecha = new Date(d.fecha);
+    d.fecha_radicacion = new Date(d.fecha_radicacion);
+    d.id_votacion = +d.id_votacion;
+    d["año"] = +d.fecha.getFullYear();
+    d["periodo"] = d["año"] >= 2006 && d["año"] <= 2009 ? "2006-2009" :
+                   d["año"] >= 2010 && d["año"] <= 2013 ? "2010-2013" :
+                   d["año"] >= 2014 && d["año"] <= 2018 ? "2014-2018" : "Otro";
+  });
   catColumns.forEach((c) => nn.addCategoricalAttrib(c));
   seqColumns.forEach((c) => nn.addSequentialAttrib(c));
-    d3.csv("./export_data.csv", function (err, data) {
-      if (err) throw err;
-    data.forEach((d,i) => d.i = i);
-    nn.data(data);
+
+  nn.updateCallback(function (newData) { 
+    console.log("update", newData.length);
+    update(newData); 
   });
 
+  nn.data(data);
   
   var graph;
 
   function update(mData) {
 
     mData = mData || data;
-    
+
     console.log("Counting votes");
-    graph = countVotes(data);
+    graph = countVotes(mData);
     console.log("Done");
 
 
