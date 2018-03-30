@@ -409,16 +409,13 @@ var networkCanvasChart = function () {
       }
 
 
-
-
-
       if (chart.useForceInABox) {
         simulation
           .nodes(chart.graph.nodes)
           .force("group", forceInABox()
             .links(chart.graph.links)
             .strength(0.3)
-            .gravityOverall(0.05)
+            // .gravityOverall(0.05)
             .template(chart.forceInABoxTemplate)
             .groupBy(chart.forceInABoxAttr)
             .size([width, height])
@@ -773,7 +770,7 @@ var networkCanvasChart = function () {
 
   }; //chart.update
 
-  function forceBoundary() {    
+  function forceBoundary() {
     for (var i = 0, n = chart.graph.nodes.length, node; i < n; ++i) {
       node = chart.graph.nodes[i];
       if (node.x > width) node.x=width;
