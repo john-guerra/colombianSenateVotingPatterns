@@ -16,7 +16,7 @@ body {
 }
 #network {
   position:relative;
-  width: 60%;
+  width: 48%;
   float:left;
   /*display: none;*/
 }
@@ -52,7 +52,7 @@ input#search, label {
 }
 #nn {
   float: left;
-  width: 40%;
+  width: 50%;
   overflow-x: scroll;
 }
 #chartingArea {
@@ -72,7 +72,7 @@ input#search, label {
 <body>
 <h1>¿Cómo votan los senadores de la república?</h1>
 <div class="desc">Este gráfico muestra las conexiones entre los senadores que han votado más de
-   <input type="range" id="link" min="0" value="2"/><span id="valLink">2</span> veces en común (incluyendo abstinencias y ausencias). Basados en los datos de <a href="http://www.congresovisible.org/">Congreso Visible</a> que incluyen todas las votaciones del senado desde 2006 a Febrero 2018
+   <input type="range" id="link" min="0" value="0"/><span id="valLink">1</span> veces en común (incluyendo abstinencias y ausencias). Basados en los datos de <a href="http://www.congresovisible.org/">Congreso Visible</a> que incluyen todas las votaciones del senado desde 2006 a Febrero 2018
 </div>
 <br>
 <input type="text" id="search" placeholder="Buscar senador@">
@@ -91,7 +91,7 @@ input#search, label {
 <script src="./countVotes.js"></script>
 <script type="text/javascript" src="https://john-guerra.github.io/Navio/Navio.js"></script>
 <script>
-/* global d3, networkCanvasChart */
+/* global d3, networkCanvasChart, Navio */
 
 var fmtDate = d3.timeParse("%m/%d/%y");
 var plot = new networkCanvasChart()
@@ -104,10 +104,10 @@ plot.height=700;
 plot.useForceInABox = d3.select("#useForceInABox").property("checked");
 plot.forceInABoxTemplate = "force";
 plot.forceInABoxAttr = "party";
-plot.charge = -50;
+plot.charge = -100;
 plot.gravity = 0.1;
 plot.linkStrength = 0.1;
-plot.linkDistance = 30;
+plot.linkDistance = 80;
 plot.radiusRange = [4,4];
 plot.xAttr = "party";
 plot.xTitle = "Partido";
@@ -138,6 +138,8 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
 
 
   var nn = new Navio("#nn", 600);
+  nn.attribWidth = 12;
+  nn.attribFontSize = 10;
   var catColumns = [
     // "titulo",
 
