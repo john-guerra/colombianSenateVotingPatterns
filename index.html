@@ -76,6 +76,7 @@ input#search, label {
 </div>
 <br>
 <input type="text" id="search" placeholder="Buscar senador@">
+<label for="chkIsolate"><input type="checkbox" id="chkIsolate">Aislar senador</label>
 <input type="checkbox" id="useForceInABox"><label for="useForceInABox">Agrupar por partido</label>
 
 <div id="Loading"> Cargando 130k registros, por favor espere </div>
@@ -195,6 +196,32 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
 
   var graph = countVotes(data);
 
+
+  function filter(graph) {
+    if (!d3.select("#chkIsolate").property("checked")) {
+      plot.drawLegend = false;
+      return graph;
+    }
+    plot.drawLegend = true;
+    var search = d3.select("#search").property("value").toUpperCase();
+
+    var dNodes = d3.map();
+    var filteredLinks = graph.links.filter(function (l) {
+      if (l.source.name.toUpperCase().indexOf(search)!==-1 || l.target.name.toUpperCase().indexOf(search)!==-1 ) {
+        dNodes.set(l.source.name, l.source);
+        dNodes.set(l.target.name, l.target);
+        return true;
+      } else { return false; }
+    });
+    console.log("filteredLinks,", filteredLinks.length);
+    console.log("filteredNodes,", dNodes.values().length);
+
+    return {
+      nodes: dNodes.values(),
+      links: filteredLinks
+    };
+  }
+
   function update(mData, hard) {
 
     mData = mData || nn.getVisible();
@@ -206,20 +233,21 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
     }
 
     plot.color(color);
-
-    var filteredLinks = graph.links;
     plot.width = d3.select("#network").node().offsetWidth;
-
-    filteredLinks = graph.links.filter(function (d) {
+    var filteredLinks = graph.links.filter(function (d) {
       return d.count >= minLink;
     });
+
+
+
     linkWidth.domain(d3.extent(filteredLinks, function (d) { return d.count; }));
+    var filteredGraph = filter({
+      nodes:graph.nodes,
+      links:filteredLinks
+    });
 
     d3.select("#network")
-      .datum({
-        nodes:graph.nodes,
-        links:filteredLinks
-      })
+      .datum(filteredGraph)
       .call(plot.update);
 
     d3.select("#link")
@@ -243,11 +271,18 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
         console.log(filteredNodes);
         if (filteredNodes)
           plot.highlightNode(filteredNodes[0]);
+
+        update();
       });
 
     d3.select("#useForceInABox")
       .on("change", function () {
         plot.useForceInABox=d3.select("#useForceInABox").property("checked");
+        update();
+      });
+
+    d3.select("#chkIsolate")
+      .on("change", function () {
         update();
       });
   }

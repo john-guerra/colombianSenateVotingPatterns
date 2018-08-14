@@ -36,6 +36,8 @@ var networkCanvasChart = function () {
   chart.boundaries = false;
   chart.linkStrokeStyle = "rgba(20,20,200,0.1)";
   chart.linkSelectedStrokeStyle = "rgba(255,200,200,1.0)";
+  chart.legendFont = "12px Sans Serif";
+  chart.drawLegend = false;
 
   var width,height;
   var margin = {top:10, left:0, bottom:60, right:10};
@@ -277,6 +279,8 @@ var networkCanvasChart = function () {
     // simulation.stop();
     // var zxScale = zoom_transform.rescaleX(xScale),
     //   zyScale = zoom_transform.rescaleY(yScale);
+
+    if (filteredNodes.length===0) return;
 
     if (min===undefined || max===undefined) {
       filteredNodes = filteredNodes.sort(function (a, b) {
@@ -580,6 +584,7 @@ var networkCanvasChart = function () {
           selectedLinkedNodes.forEach(function (d) {
             context.beginPath();
             context.fillStyle = color(d.party);
+            drawLegend(d);
             drawNode(d);
             context.fill();
           });
@@ -601,6 +606,7 @@ var networkCanvasChart = function () {
           clusters.forEach(function(cluster) {
             context.beginPath();
             cluster.values.forEach(drawNode);
+            cluster.values.forEach(drawLegend);
             context.fillStyle = color(chart.showClusters ? cluster.key : "none");
             context.fill();
           });
@@ -638,6 +644,7 @@ var networkCanvasChart = function () {
       //   console.log(d3.event.subject);
       // }
       chart.highlightNode = function(node) {
+        if (!node) return;
         svg.select("#tooltip")
           .attr("dy", (node.r*2 + 10) + "px")
           .attr("dx", (node.r/2) + "px")
@@ -738,6 +745,13 @@ var networkCanvasChart = function () {
           // context.fill();
 
         }
+
+      }// drawNode
+
+      function drawLegend(d) {
+        if (!chart.drawLegend) return;
+        context.font = chart.legendFont;
+        context.fillText(nameAttr(d), d.x+d.r/2, d.y+d.r/2+20);
 
       }// drawNode
 
