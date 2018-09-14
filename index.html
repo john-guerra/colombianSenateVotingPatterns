@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Patrones de votación senado Colombia">
   <meta name="title" content="Patrones de votación senado Colombia">
   <meta name="author" content="John Alexis Guerra Gomez">
@@ -11,7 +11,7 @@
   <title>Visualización de los patrones de votación de los Senadores Colombiano</title>
   <style>
 body {
-  font-family: 'Oswald', serif;
+  font-family: "Oswald", serif;
   margin:20px;
 }
 #network {
@@ -44,7 +44,7 @@ input#search, label {
 
 #tooltip {
   font-size: 14pt;
-  font-family: 'Oswald', serif;
+  font-family: "Oswald", serif;
   text-anchor: middle;
   pointer-events: none;
   text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
@@ -72,7 +72,7 @@ input#search, label {
 <body>
 <h1>¿Cómo votan los senadores de la república?</h1>
 <div class="desc">Este gráfico muestra las conexiones entre los senadores que han votado más de
-   <input type="range" id="link" min="0" value="0"/><span id="valLink">1</span> veces en común (incluyendo abstinencias y ausencias). Basados en los datos de <a href="http://www.congresovisible.org/">Congreso Visible</a> que incluyen todas las votaciones del senado desde 2006 a Febrero 2018
+   <input type="range" id="link" min="0" value="2"/><span id="valLink">1</span> veces en común (incluyendo abstinencias y ausencias). Basados en los datos de <a href="http://www.congresovisible.org/">Congreso Visible</a> que incluyen todas las votaciones del senado desde 2006 a Febrero 2018
 </div>
 <br>
 <input type="text" id="search" placeholder="Buscar senador@">
@@ -90,12 +90,12 @@ input#search, label {
 <script src="forceInABoxv4.js"></script>
 <script src="https://d3js.org/d3.v4.js"></script>
 <script src="./countVotes.js"></script>
-<script type="text/javascript" src="https://john-guerra.github.io/Navio/Navio.js"></script>
+<script type="text/javascript" src="./navio.js"></script>
 <script>
-/* global d3, networkCanvasChart, Navio */
+/* global d3, networkCanvasChart, navio */
 
 var fmtDate = d3.timeParse("%m/%d/%y");
-var plot = new networkCanvasChart()
+var plot = new networkCanvasChart();
 plot.collide = false;
 plot.showImages = false;
 plot.showLinks = true;
@@ -105,16 +105,18 @@ plot.height=700;
 plot.useForceInABox = d3.select("#useForceInABox").property("checked");
 plot.forceInABoxTemplate = "force";
 plot.forceInABoxAttr = "party";
-plot.charge = -100;
-plot.gravity = 0.1;
+plot.charge = -70;
+plot.gravity = 0.15;
 plot.linkStrength = 0.1;
-plot.linkDistance = 80;
+plot.linkDistance = 10;
 plot.radiusRange = [4,4];
 plot.xAttr = "party";
 plot.xTitle = "Partido";
 plot.yTitle = false;
 plot.boundaries = true;
-plot.linkStrokeStyle = "rgba(80,80,100,0.05)";
+plot.linkStrokeStyle = "rgba(90,90,110,0.1)";
+plot.linkWidthRange = [0.5, 20];
+plot.linkWidthAttr = function (d) { return d.count; };
 
 // var svg = d3.select("svg"),
 //     width = +svg.attr("width"),
@@ -138,9 +140,9 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
   d3.select("#Loading").text("");
 
 
-  var nn = new Navio("#nn", 600);
-  nn.attribWidth = 12;
-  nn.attribFontSize = 10;
+  var nn = navio(d3.select("#nn"), 600);
+  nn.attribWidth = 15;
+  nn.attribFontSize = 12;
   var catColumns = [
     // "titulo",
 
@@ -161,7 +163,6 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
     // "tags"
     "voto",
     "periodo"
-
 
   ];
   var seqColumns = [
@@ -200,8 +201,14 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
   function filter(graph) {
     if (!d3.select("#chkIsolate").property("checked")) {
       plot.drawLegend = false;
+      plot.charge = -70;
+      plot.linkDistance = 10;
+
       return graph;
     }
+    plot.charge = -100;
+    plot.linkDistance = 100;
+
     plot.drawLegend = true;
     var search = d3.select("#search").property("value").toUpperCase();
 
@@ -291,67 +298,6 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
 
   update();
 
-    // // Remove duplicates and create a dumb object for the nodes
-    // var ordered = d3.set(
-    //    graph.links.map(function (d) { return d.source; })
-    //    .concat(graph.links.map(function (d) { return d.target; }))
-    //  ).values().sort();
-    // ordered.forEach(function (d) { console.log(d); });
-
-
-
-
-
-    // var link = svg.append("g")
-    //     .attr("class", "links")
-    //   .selectAll("line")
-    //   .data(filteredLinks)
-    //   .enter().append("line")
-    //     .attr("opacity", function(d) { return linkWidth(d.count); });
-
-    // var node = svg.append("g")
-    //     .attr("class", "nodes")
-    //   .selectAll(".node")
-    //   .data(graph.nodes);
-    // var nodeEnter = node.enter().append("g").attr("class", "node");
-    // nodeEnter.append("circle")
-    //   .attr("r", 5)
-    //   .attr("fill", function(d) { return color(d.party); })
-    //   .call(d3.drag()
-    //       .on("start", dragstarted)
-    //       .on("drag", dragged)
-    //       .on("end", dragended));
-
-    // nodeEnter.append("text")
-    //   .text(function (d) { return d.name + " " + d.party;});
-
-    // nodeEnter.append("title")
-    //     .text(function(d) { return d.name; });
-
-    // node.exit().remove();
-
-    // simulation
-    //     .nodes(graph.nodes)
-    //     .on("tick", ticked);
-
-    // simulation.force("link")
-    //     .links(filteredLinks);
-
-    // function ticked() {
-    //   link
-    //       .attr("x1", function(d) { return d.source.x; })
-    //       .attr("y1", function(d) { return d.source.y; })
-    //       .attr("x2", function(d) { return d.target.x; })
-    //       .attr("y2", function(d) { return d.target.y; });
-
-    //   node.merge(nodeEnter).attr("transform", function (d) {
-    //     return "translate(" + d.x+ "," + d.y+ ")";
-    //   });
-    //       // .attr("cx", function(d) { return d.x; })
-    //       // .attr("cy", function(d) { return d.y; });
-    // }
-
-
 
 });
 
@@ -360,13 +306,13 @@ d3.csv("VotacionesSenado2017_de_CongresoVisible_small.csv", function (error, dat
 
   <!-- GOOGLE ANALYTICS -->
   <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (function(i,s,o,g,r,a,m){i["GoogleAnalyticsObject"]=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    })(window,document,"script","//www.google-analytics.com/analytics.js","ga");
 
-    ga('create', 'UA-72531610-1', 'auto');
-    ga('send', 'pageview');
+    ga("create", "UA-72531610-1", "auto");
+    ga("send", "pageview");
 
   </script>
 </body>

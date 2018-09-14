@@ -35,6 +35,8 @@ var networkCanvasChart = function () {
   chart.showImages = true;
   chart.boundaries = false;
   chart.linkStrokeStyle = "rgba(20,20,200,0.1)";
+  chart.linkWidthAttr = null;
+  chart.linkWidthRange= [0.1, 10];
   chart.linkSelectedStrokeStyle = "rgba(255,200,200,1.0)";
   chart.legendFont = "12px Sans Serif";
   chart.drawLegend = false;
@@ -50,7 +52,7 @@ var networkCanvasChart = function () {
   // Should we show clusters?
 
 
-
+  var lwScale = d3.scaleLinear(); //linkwidth
   var xScale = d3.scalePow().exponent(0.25);
   // var xScale = d3.scaleLinear();
   var yScale = d3.scaleLinear();
@@ -61,6 +63,7 @@ var networkCanvasChart = function () {
   var xAxis = d3.axisBottom(xScale)
             .ticks(5, ".0f");
 
+  chart.lwScale = function(_) { return arguments.length ? (lwScale = _, chart) : lwScale; };
   chart.xScale = function(_) { return arguments.length ? (xScale = _, chart) : xScale; };
   chart.xAxis = function(_) { return arguments.length ? (xAxis = _, chart) : xAxis; };
   chart.yScale = function(_) { return arguments.length ? (yScale = _, chart) : yScale; };
@@ -366,6 +369,11 @@ var networkCanvasChart = function () {
       rScale.domain(d3.extent(graph.nodes, chart.rAttr))
         .range(chart.radiusRange);
 
+      if (chart.linkWidthAttr) {
+        lwScale.domain(d3.extent(graph.links, chart.linkWidthAttr))
+          .range(chart.linkWidthRange);
+      }
+
       graph.nodes.forEach(function (d) {
         d.r = rScale(chart.rAttr(d));
       });
@@ -531,7 +539,6 @@ var networkCanvasChart = function () {
             if (selectedNode && selectedLinks && nonSelectedLinks) {
               // context.beginPath();
               context.strokeStyle = chart.linkSelectedStrokeStyle;
-              context.lineWidth = 1;
               selectedLinks.forEach(drawLink);
               // context.stroke();
 
@@ -693,7 +700,7 @@ var networkCanvasChart = function () {
         var c = d3.select(this.parentElement).select("canvas").node();
         var node = simulation.find(d3.mouse(c)[0],
           d3.mouse(c)[1] - margin.top
-          );
+        );
 
         chart.highlightNode(node);
         // console.log((d3.mouse(this)[0]-margin.left) + " - " + (d3.mouse(canvas)[0]-margin.left) );
@@ -704,6 +711,7 @@ var networkCanvasChart = function () {
 
 
       function mouseleave() {
+        console.log("mouseleave");
         selectedLinkedNodes = null;
         nonSelectedLinkedNodes = null;
         selectedNode = null;
@@ -716,12 +724,18 @@ var networkCanvasChart = function () {
         svg.select("#tooltip").select("#name").text("");
         svg.select("#tooltip").select("#x").text("");
         svg.select("#tooltip").select("#y").text("");
+        simulation.alphaTarget(0).restart();
       }
 
 
 
       function drawLink(d) {
         context.beginPath();
+        if (chart.linkWidthAttr) {
+          context.lineWidth = lwScale(chart.linkWidthAttr(d));
+        } else {
+          context.lineWidth = 1;
+        }
         context.moveTo(d.source.x+d.source.r/2, d.source.y+d.source.r/2);
         context.lineTo(d.target.x+d.target.r/2, d.target.y+d.target.r/2);
         context.stroke();
@@ -787,10 +801,10 @@ var networkCanvasChart = function () {
   function forceBoundary() {
     for (var i = 0, n = chart.graph.nodes.length, node; i < n; ++i) {
       node = chart.graph.nodes[i];
-      if (node.x > width) node.x=width;
-      if (node.x < 0) node.x=0;
-      if (node.y > height) node.y=height;
-      if (node.y < 0) node.y=0;
+      if (node.x > width) node.x=width-node.r;
+      if (node.x < 0) node.x=node.r;
+      if (node.y > height) node.y=height-node.r;
+      if (node.y < 0) node.y=node.r;
     }
   }
 
